@@ -279,6 +279,19 @@ l.foreach(println)
 
 
 ///////////////////////////////////////
+// withFilterメソッド
+def f091 {
+// filter より withFilter のほうが早い。
+// しかし withFilter で終了することはできず
+// かならず foreach や map などとチェインが続けなければならない
+(0 to 10) withFilter { _ % 2 == 0 } foreach { println } 
+
+// withFilterだけだとエラーになる
+// (0 to 10) withFilter { _ % 2 == 0 } // <= error
+}
+
+
+///////////////////////////////////////
 // reduceLeft foldLeft
 def f091 {
 // リストを連結処理したい時に使うメソッド
@@ -465,3 +478,78 @@ def f190 {
   println(l)
 }
 
+
+///////////////////////////////////////
+// ArrayBufferの拡張
+def f200 {
+abstract class Element {
+  def register
+  def unregister
+}
+
+class HogeElement(val n:Int) extends Element {
+  def register   = println(n + ": register")
+  def unregister = println(n + ": unregister")
+  override def toString = n.toString
+}
+
+class ElementArrayBuffer[A <: Element] extends 
+      collection.mutable.ArrayBuffer[A] {
+
+  override def +=(elem:A):this.type = {
+    super.+=(elem)
+    elem.register
+    this
+  }
+
+  override def remove(n: Int) = { 
+    val ret = super.remove(n)
+    ret.unregister
+    ret
+  }
+
+  override def clear {
+    foreach { _.unregister }
+    super.clear
+  }
+}
+
+
+// @see collection.mutable.ArrayBuffer.+=
+println("----- new(0 to 5) and += -----")
+val buf = new ElementArrayBuffer[HogeElement]
+(0 to 5) foreach { i =>
+  buf += new HogeElement(i)
+}
+
+// @see collection.mutable.ArrayBuffer.++=
+//  | case _ => super.++=(xs)
+// @see collection.generic.Growable.++=
+//  | def ++=(xs: TraversableOnce[A]): this.type = { xs foreach += ; this } 
+// @see collection.mutable.ArrayBuffer.+=
+println("\n----- new(6 to 10) and ++= -----")
+buf ++= (6 to 10) map { i => new HogeElement(i) }
+
+// @see collection.mutable.BufferLike.-=
+//  | if (i != -1) remove(i)
+// @see collection.mutable.remove
+println("\n----- find(n==3) and -= -----")
+
+buf find { e =>
+  e.n == 3
+} foreach(buf -=)
+
+// @see collection.generic.Shrinkable.--=
+//  | def --=(xs: TraversableOnce[A]): this.type = { xs foreach -= ; this }
+// @see collection.mutable.BufferLike.-=
+//  | if (i != -1) remove(i)
+// @see collection.mutable.remove
+println("\n----- filter(n>7) and --= -----")
+buf --= buf filter { e =>
+  e.n > 7
+}
+
+// @see collection.mutable.ArrayBuffer.clear
+println("\n----- clear -----")
+buf.clear
+}

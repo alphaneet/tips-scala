@@ -276,3 +276,47 @@ println("==: " + (l1 == l2))
 println("eq: " + (l1 eq l2) + "\n")
 }
 
+
+/////////////////////////////////////////
+// assert, require, ensuring
+def f050 {
+  // assert
+  // 第1引数はBooleanで、falseの場合 java.lang.AssertionError
+  // が発生する
+  // 第2引数はエラーメッセージを指定することができる（なくてもいい）
+
+  def assertTest(v:Int) {
+    assert(v < 5, "error dao")
+  }
+  assertTest(3)
+  // falseになるのでAssertionErrorがでる
+  // assertTest(6)
+
+  // ensuring
+  // 引数はassertと一緒で関数の戻り値に対してチェックする
+  // 述語関数のように使える。戻り値は "_" で表す
+
+  def ensuringTest(v:Int) = {
+    v
+  } ensuring(_ < 5, "error dao")
+
+  ensuringTest(3)
+  // 同じく例外がでる
+  //ensuringTest(6)
+
+  // require
+  // 関数の引数が正しいかチェックする
+  // assertとensuringと違って 
+  // java.lang.IllegalArgumentException をスローする
+  def requireTest(v:Int) = {
+    require(v < 5, "error dao")
+  }
+  requireTest(3)
+  // IllegalArgumentExceptionがスローされる
+  // requireTest(6) 
+
+  // コンパイル時に -Xdisable-assertionsスイッチで
+  // assert, ensuringを無効にできる
+  // requireは関数は常に有効
+}
+
